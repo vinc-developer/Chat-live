@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr" >
+
+<head>
+    <meta charset="UTF-8">
+    <title>Messagerie instantanée via Socket.IO</title>
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/loader.css">
+</head>
+
+<body class="modal-active">
+
+<div id="modal-container" class="modal-container">
+    <div id="contentUsername" class="modal-background">
+        <form class="modal" id="formUsername" method="post">
+            <h2>Choisis un username</h2>
+            <input autofocus autocomplete="off" id="inputUsername" name="username"  type="text">
+            <div class="loader hidden" id="loaderUsername"></div>
+        </form>
+    </div>
+    <div id="contentUsers" class="modal-background none">
+        <span class="closeIcon" onclick="closeModal()"></span>
+        <ul class="listModal">
+            <li>Joris</li>
+            <li>Alexis974</li>
+            <li>ManiMano</li>
+            <li>GoogleHome</li>
+            <li>Huge Man</li>
+            <li>Ricky Dicks</li>
+            <li>Martin McCain</li>
+            <li>Mister T</li>
+            <li>MozorStudio</li>
+            <li>GutterBalls</li>
+            <li>HessMan</li>
+        </ul>
+    </div>
+</div>
+
+<div class="wrapper">
+    <div class="container">
+        <div class="left">
+            <div class="top">
+                <input type="text" placeholder="Rechercher" />
+                <a href="javascript:" class="search"></a>
+            </div>
+            <ul class="people">
+                <li class="person" data-chat="person0">
+                    <span class="name">Discussion générale</span>
+                    <span class="preview">Bienvenue !</span>
+                </li>
+            </ul>
+        </div>
+        <div class="right">
+            <div class="top">
+                <span>Vers:
+                    <span class="name" id="infoPersonTop">Discussion générale</span>
+                </span>
+            </div>
+            <div class="chat" data-chat="person0">
+                <div class="conversation-start">
+                    <span>Bienvenue !</span>
+                </div>
+            </div>
+            <div class="write">
+                <span class="someoneWriting none">Vincent est entrain d'ecrire...</span>
+                <input id="inputMessage" type="text" />
+                <a href="javascript:" class="write-link send" onclick="sendMessage()"></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="assets/js/index.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+const socket = io();
+
+// Variables globales
+let formUsername = document.body.querySelector('#formUsername'),
+    inputUsername = formUsername.querySelector('#inputUsername'),
+    loaderUsername = formUsername.querySelector('#loaderUsername'),
+    inputMessage = document.body.querySelector('#inputMessage'),
+    username,
+    allUsers;
+
+// Envoie de l'username souhaité
+formUsername.addEventListener('submit', (event) => {
+    event.preventDefault()
+    let usernameWanted = inputUsername.value
+    socket.emit('setUsername', usernameWanted)
+    inputUsername.classList.add('hidden')
+    loaderUsername.classList.remove('hidden')
+})
+
+//Envoie d'un message & detection ecriture
+let isWriting = false;
+let stopWriting;
+inputMessage.addEventListener('keydown', (event) => {
+    if(event.keyCode === 13){
+        sendMessage();
+    }else{
+        //detection entrain ecrire
+        clearTimeout(stopWriting);
+        if(!isWriting){
+            isWriting = true;
+            socket.emit('startWriting', chat.person);
+        }
+        stopWriting = setTimeout(() => {
+            socket.emit('stopWriting', chat.person);
+            isWriting = false;
+        }, 1000);
+    }
+})
+
+function sendMessage(){
+    let text = inputMessage.value.trim();
+    if(text !== ''){
+        socket.emit('sendMessage', text, chat.person);
+        inputMessage.value = '';
+        clearTimeout(stopWriting);
+        socket.emit('stopWriting', chat.person);
+        isWriting = false;
+    }
+}
+
+// Réponses concernant l'assignation de l'username
+socket.on('acceptUsername', (_username, _allUsers, allSocketIDs) => {
+    username = _username;
+    allUsers = _allUsers;
+    console.log(allUsers);
+    closeModal();
+    updateUsers(allUsers);
+    setFriends(allUsers, allSocketIDs, username);
+
+})
+socket.on('rejectUsername', (_username) => {
+    inputUsername.value = ''
+    inputUsername.setAttribute('placeholder', "L'username "+_username+" est déjà pris !")
+    inputUsername.classList.remove('hidden')
+    loaderUsername.classList.add('hidden')
+})
+
+// Mise à jour des utilisateurs 
+socket.on('newUser', (newUsername,newSocketID , _allUsers) => {
+    allUsers = _allUsers
+    updateUsers(allUsers)
+    messageNewUser(newUsername)
+    addUserChat(newUsername, newSocketID)
+})
+socket.on('leftUser', (oldSocketID, _allUsers) => {
+    allUsers = _allUsers
+    updateUsers(allUsers)
+    removeUserChat(oldSocketID)
+})
+
+//Affichage d'un message
+socket.on('confirmMessage', (text, dataChat) => showMyMessage(text, dataChat));
+socket.on('newMessage', (text, usernameSender, dataChat) => showNewMessage(text, usernameSender, dataChat));
+
+//information sur l'ecriture d'un message
+socket.on('userStartWriting', (usernameWriting, dataChat) => showSomeoneWriting(usernameWriting, dataChat));
+socket.on('userStopWriting', (dataChat) => removeSomeoneWriting(dataChat));
+
+
+</script>
+
+</body>
+
+</html>
