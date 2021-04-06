@@ -31,7 +31,7 @@ function setAciveChat(f) {
 
 // Vérification de l'usabilité du lien vers le modal users
 function checkLinkUsersModal() {
-  if (chat.person == 'person0' || chat.person == null) {
+  if (chat.person === 'person0' || chat.person === null) {
     chat.name.addEventListener('click', openUsersModal, false)
     chat.name.style.cursor = 'pointer'
   } else {
@@ -63,8 +63,7 @@ function openUsersModal() {
 
 // Fermeture du modal
 function closeModal() {
-  //modalContainer.classList.add('out')
-  modalContainer.style.display = 'none';
+  modalContainer.classList.add('out')
   document.body.classList.remove('modal-active')
 }
 
@@ -82,9 +81,8 @@ function updateUsers(users) {
   friends.all[0].querySelector('.name').innerHTML = text
 
   // Mise à jour du texte en haut (si c'est le chat actif)
-  if (chat.person == 'person0' || chat.person == null)
+  if (chat.person === 'person0' || chat.person === null)
     document.body.querySelector('#infoPersonTop').innerHTML = text
-
 }
 
 //Message
@@ -157,7 +155,7 @@ function addUserChat(newUsername, newSocketID){
 
 function removeUserChat(oldSocketID){
 
-  if(chat.person == oldSocketID){
+  if(chat.person === oldSocketID){
     setAciveChat(friends.all[0]);
   }
 

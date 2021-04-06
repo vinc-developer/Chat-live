@@ -23,14 +23,14 @@ let usernames = []
 ex.use(express.static(options.root))
 ex.use(morgan('dev'))
 ex.use(cors());
-
+/*
 ex.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     next();
 });
-
+*/
 // Routes
 
 ex.get('/', (req, res) => {
@@ -65,21 +65,20 @@ io.on('connection', socket => {
         }
 
         let timeFakeLoading = 0;
-       // setTimeout(() => {
+       setTimeout(() => {
 
             // Traitement final
             if (usernameTaken) {
                 socket.emit('rejectUsername', usernameWanted);
             } else {
-                socket.join('users', () => {
+                socket.join('users')
                     usernames[socket.id] = usernameWanted;
                     let justUsernames = getUsernames();
                     socket.emit('acceptUsername', usernameWanted, justUsernames, getSocketIDs());
                     socket.to('users').emit('newUser', usernameWanted, socket.id, justUsernames);
-                })
             }
             
-        //});
+        });
     });
 
     //Reception d'un message
@@ -145,4 +144,4 @@ function getVariablesDataChat(dataChat, socketID){
 
 }
 // Lancement de l'application
-ex.listen(3300, () => console.log(`Server started on port : ${3300}`));
+app.listen(3300, () => console.log(`Server started on port : ${3300}`));
