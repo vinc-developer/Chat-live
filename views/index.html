@@ -44,7 +44,7 @@
         <div class="left">
             <div class="top">
                 <input type="text" placeholder="Rechercher" />
-                <a href="javascript:" class="search"></a>
+                <a href="javascript:;" class="search"></a>
             </div>
             <ul class="people">
                 <li class="person" data-chat="person0">
@@ -65,9 +65,9 @@
                 </div>
             </div>
             <div class="write">
-                <span class="someoneWriting none">Vincent est entrain d'ecrire...</span>
+                <span class="someoneWriting none">Joris est entrain d'écrire...</span>
                 <input id="inputMessage" type="text" />
-                <a href="javascript:" class="write-link send" onclick="sendMessage()"></a>
+                <a class="write-link send" href="javascript:;" onclick="sendMessage()"></a>
             </div>
         </div>
     </div>
@@ -75,97 +75,98 @@
 
 <script src="assets/js/index.js"></script>
 <script src="/socket.io/socket.io.js"></script>
-
 <script>
 
-const socket = io();
+    const socket = io();
 
-// Variables globales
-let formUsername = document.body.querySelector('#formUsername'),
-    inputUsername = formUsername.querySelector('#inputUsername'),
-    loaderUsername = formUsername.querySelector('#loaderUsername'),
-    inputMessage = document.body.querySelector('#inputMessage'),
-    username,
-    allUsers;
+    // Variables globales
+    let formUsername = document.body.querySelector('#formUsername'),
+        inputUsername = formUsername.querySelector('#inputUsername'),
+        loaderUsername = formUsername.querySelector('#loaderUsername'),
+        inputMessage = document.body.querySelector('#inputMessage'),
+        username,
+        allUsers
 
-// Envoie de l'username souhaité
-formUsername.addEventListener('submit', (event) => {
-    event.preventDefault()
-    let usernameWanted = inputUsername.value
-    socket.emit('setUsername', usernameWanted)
-    inputUsername.classList.add('hidden')
-    loaderUsername.classList.remove('hidden')
-})
+    // Envoie de l'username souhaité
+    formUsername.addEventListener('submit', (event) => {
+        event.preventDefault()
+        let usernameWanted = inputUsername.value
+        socket.emit('setUsername', usernameWanted)
+        inputUsername.classList.add('hidden')
+        loaderUsername.classList.remove('hidden')
+    })
 
-//Envoie d'un message & detection ecriture
-let isWriting = false;
-let stopWriting;
-inputMessage.addEventListener('keydown', (event) => {
-    if(event.keyCode === 13){
-        sendMessage();
-    }else{
-        //detection entrain ecrire
-        clearTimeout(stopWriting);
-        if(!isWriting){
-            isWriting = true;
-            socket.emit('startWriting', chat.person);
+    // Envoie d'un message & Traitement écriture
+    let isWriting = false,
+        stopWriting
+    inputMessage.addEventListener('keydown', (event) => {
+        if (event.keyCode == 13) {
+            // Envoie du message
+            sendMessage()
+        } else {
+            // Traitement concernant l'écriture
+            clearTimeout(stopWriting)
+            if (!isWriting) {
+                isWriting = true
+                console.log('Start writing')
+                socket.emit('startWriting', chat.person)
+            }
+            stopWriting = setTimeout(() => {
+                console.log('Stop writing')
+                socket.emit('stopWriting', chat.person)
+                isWriting = false
+            }, 1000)
         }
-        stopWriting = setTimeout(() => {
-            socket.emit('stopWriting', chat.person);
-            isWriting = false;
-        }, 1000);
+    })
+    function sendMessage() {
+        let text = inputMessage.value.trim()
+        if (text != '') {
+            // Envoie du message
+            socket.emit('sendMessage', text, chat.person)
+            inputMessage.value = ''
+            // Traitement pour l'écriture
+            clearTimeout(stopWriting)
+            isWriting = false
+            console.log('Stop writing')
+            socket.emit('stopWriting', chat.person)
+        }
     }
-})
 
-function sendMessage(){
-    let text = inputMessage.value.trim();
-    if(text !== ''){
-        socket.emit('sendMessage', text, chat.person);
-        inputMessage.value = '';
-        clearTimeout(stopWriting);
-        socket.emit('stopWriting', chat.person);
-        isWriting = false;
-    }
-}
+    // Réponses concernant l'assignation de l'username
+    socket.on('acceptUsername', (_username, _allUsers, allSocketIDs) => {
+        username = _username
+        allUsers = _allUsers
+        closeModal()
+        updateUsers(allUsers)
+        setFriends(allUsers, allSocketIDs, username)
+    })
+    socket.on('rejectUsername', (_username) => {
+        inputUsername.value = ''
+        inputUsername.setAttribute('placeholder', "L'username "+_username+" est déjà pris !")
+        inputUsername.classList.remove('hidden')
+        loaderUsername.classList.add('hidden')
+    })
 
-// Réponses concernant l'assignation de l'username
-socket.on('acceptUsername', (_username, _allUsers, allSocketIDs) => {
-    username = _username;
-    allUsers = _allUsers;
-    console.log(allUsers);
-    closeModal();
-    updateUsers(allUsers);
-    setFriends(allUsers, allSocketIDs, username);
+    // Mise à jour des utilisateurs
+    socket.on('newUser', (newUsername, newSocketID, _allUsers) => {
+        allUsers = _allUsers
+        updateUsers(allUsers)
+        messageNewUser(newUsername)
+        addUserChat(newUsername, newSocketID)
+    })
+    socket.on('leftUser', (oldSocketID, _allUsers) => {
+        allUsers = _allUsers
+        updateUsers(allUsers)
+        removeUserChat(oldSocketID)
+    })
 
-})
-socket.on('rejectUsername', (_username) => {
-    inputUsername.value = ''
-    inputUsername.setAttribute('placeholder', "L'username "+_username+" est déjà pris !")
-    inputUsername.classList.remove('hidden')
-    loaderUsername.classList.add('hidden')
-})
+    // Affichage d'un message
+    socket.on('confirmMessage', (text, dataChat) => showMyMessage(text, dataChat))
+    socket.on('newMessage', (text, usernameSender, dataChat) => showNewMessage(text, usernameSender, dataChat))
 
-// Mise à jour des utilisateurs 
-socket.on('newUser', (newUsername,newSocketID , _allUsers) => {
-    allUsers = _allUsers
-    updateUsers(allUsers)
-    messageNewUser(newUsername)
-    addUserChat(newUsername, newSocketID)
-})
-socket.on('leftUser', (oldSocketID, _allUsers) => {
-    allUsers = _allUsers
-    updateUsers(allUsers)
-    removeUserChat(oldSocketID)
-})
-
-//Affichage d'un message
-socket.on('confirmMessage', (text, dataChat) => showMyMessage(text, dataChat));
-socket.on('newMessage', (text, usernameSender, dataChat) => showNewMessage(text, usernameSender, dataChat));
-
-//information sur l'ecriture d'un message
-socket.on('userStartWriting', (usernameWriting, dataChat) => showSomeoneWriting(usernameWriting, dataChat));
-socket.on('userStopWriting', (dataChat) => removeSomeoneWriting(dataChat));
-
+    // Informations sur l'écriture d'un message
+    socket.on('userStartWriting', (usernameWriting, dataChat) => showSomeoneWriting(usernameWriting, dataChat))
+    socket.on('userStopWriting', (dataChat) => removeSomeoneWriting(dataChat))
 
 </script>
 

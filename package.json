@@ -1,5 +1,5 @@
 {
-  "name": "socket",
+  "name": "Socket.io",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
@@ -11,12 +11,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.17.1",
-    "socket.io": "^4.0.0",
+    "express": "^4.16.3",
+    "socket.io": "^2.2.0",
     "striptags": "^3.1.1"
   },
   "devDependencies": {
-    "morgan": "^1.10.0"
+    "morgan": "^1.9.1"
   }
 }

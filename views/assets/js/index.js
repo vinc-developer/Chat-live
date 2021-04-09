@@ -2,18 +2,18 @@ document.querySelector('.chat[data-chat=person0]').classList.add('active-chat');
 document.querySelector('.person[data-chat=person0]').classList.add('active');
 
 var friends = {
-  list: document.querySelector('ul.people'),
-  all: document.querySelectorAll('.left .person'),
-  name: '' },
+      list: document.querySelector('ul.people'),
+      all: document.querySelectorAll('.left .person'),
+      name: '' },
 
-chat = {
-  container: document.querySelector('.container .right'),
-  current: null,
-  person: null,
-  name: document.querySelector('.container .right .top .name') };
+    chat = {
+      container: document.querySelector('.container .right'),
+      current: null,
+      person: null,
+      name: document.querySelector('.container .right .top .name') };
 
 
-updateFriends();
+updateFriends()
 
 checkLinkUsersModal()
 
@@ -31,7 +31,7 @@ function setAciveChat(f) {
 
 // Vérification de l'usabilité du lien vers le modal users
 function checkLinkUsersModal() {
-  if (chat.person === 'person0' || chat.person === null) {
+  if (chat.person == 'person0' || chat.person == null) {
     chat.name.addEventListener('click', openUsersModal, false)
     chat.name.style.cursor = 'pointer'
   } else {
@@ -81,57 +81,64 @@ function updateUsers(users) {
   friends.all[0].querySelector('.name').innerHTML = text
 
   // Mise à jour du texte en haut (si c'est le chat actif)
-  if (chat.person === 'person0' || chat.person === null)
+  if (chat.person == 'person0' || chat.person == null)
     document.body.querySelector('#infoPersonTop').innerHTML = text
+
 }
 
-//Message
-let globalChat = chat.container.querySelector('.chat[data-chat=person0]');
+// Messages
+var globalChat = chat.container.querySelector('.chat[data-chat=person0]')
 
 // Message d'un nouvel utilisateur
-function messageNewUser(newUsername, dataChat) {
-  let message = '<div class="conversation-start"><span>'+newUsername+' est là !</span></div>';
-  globalChat.insertAdjacentHTML('beforeend', message);
+function messageNewUser(newUsername) {
+  let message = '<div class="conversation-start"><span>'+newUsername+' est là !</span></div>'
+  globalChat.insertAdjacentHTML('beforeend', message)
 }
 
-//message de l'utilisateur courant
-function showMyMessage(text, dataChat){
-  let message = '<div class="bubble name me">'+text+'</div>';
-  chat.container.querySelector('.chat[data-chat="' + dataChat + '"]').insertAdjacentHTML('beforeend', message);
+// Affichage du message de l'utilisateur courant
+function showMyMessage(text, dataChat) {
+  let message = '<div class="bubble name me">' + text + '</div>'
+  chat.container.querySelector('.chat[data-chat="' + dataChat + '"]').insertAdjacentHTML('beforeend', message)
 }
 
-//message de l'utilisateur exterieur
-function showNewMessage(text, usernameSender){
-  let message = '<div class="bubble name you"><span class="username">'+usernameSender+'</span>'+text+'</div>';
-  chat.container.querySelector('.chat[data-chat="' + dataChat + '"]').insertAdjacentHTML('beforeend', message);
+// Affichage d'un message extérieur
+function showNewMessage(text, usernameSender, dataChat) {
+  let message = '<div class="bubble name you"><span class="username">' + usernameSender + '</span>' + text + '</div>'
+  chat.container.querySelector('.chat[data-chat="' + dataChat + '"]').insertAdjacentHTML('beforeend', message)
 }
 
-var someoneWriting = document.body.querySelector('.someoneWriting');
-function showSomeoneWriting(usernameWriting, dataChat){
-  if (chat.person === dataChat || dataChat === 'person0' && chat.person == null){
-    someoneWriting.innerHTML = usernameWriting + ' est entrain d\'écrire...';
-    someoneWriting.classList.remove('none');
+// Informations écriture
+
+var someoneWriting = document.body.querySelector('.someoneWriting')
+
+// Affichage d'un message d'information sur l'écriture
+function showSomeoneWriting(usernameWriting, dataChat) {
+  if (chat.person == dataChat || (dataChat == 'person0' && chat.person == null)) {
+    someoneWriting.innerHTML = usernameWriting + ' est entrain d\'écrire..'
+    someoneWriting.classList.remove('none')
   }
 }
 
-function removeSomeoneWriting(){
-  if (chat.person === dataChat || dataChat === 'person0' && chat.person == null){
-    someoneWriting.classList.add('none');
-  }
-
-}
-
-function setFriends(users, socketIDs, personalUsername){
-  for(let i = 0; i < users.length; i++ ){
-    if(personalUsername !== users[i]){
-      addUserChat(users[i], socketIDs[i] );
-    }
+// Suppression d'un message d'information sur l'écriture
+function removeSomeoneWriting(dataChat) {
+  if (chat.person == dataChat || (dataChat == 'person0' && chat.person == null)) {
+    someoneWriting.classList.add('none')
   }
 }
 
-//messageries
-function updateFriends(){
-  friends.all = document.querySelectorAll('.left .person');
+/* Messageries */
+
+// Affichage des utilisateurs à la connexion
+function setFriends(users, socketIDs, personalUsername) {
+  for (let i = 0; i < users.length; i++) {
+    if (personalUsername != users[i])
+      addUserChat(users[i], socketIDs[i])
+  }
+}
+
+// Rechargement des liens entre amis et messagerie
+function updateFriends() {
+  friends.all = document.querySelectorAll('.left .person')
   friends.all.forEach(function (f) {
     f.addEventListener('mousedown', function () {
       f.classList.contains('active') || setAciveChat(f);
@@ -139,31 +146,39 @@ function updateFriends(){
   });
 }
 
-//message privé
-function addUserChat(newUsername, newSocketID){
-  let element = '<li class="person" data-chat="'+newSocketID+'">\n' +
-      '                    <span class="name">'+newUsername+'</span><br />\n' +
-      '                    <span class="preview">message privé !</span>\n' +
-      '                </li>';
-  friends.list.insertAdjacentHTML('beforeend', element);
-  element = '<div class="chat" data-chat="' + newSocketID + '"></div>';
-  let lastChat = chat.container.querySelectorAll('.chat');
-  lastChat = lastChat[lastChat.length-1];
-  lastChat.insertAdjacentHTML('afterend', element);
-  updateFriends();
+// Ajout d'un messagerie
+function addUserChat(newUsername, newSocketID) {
+
+  // Amis
+  let element = '<li class="person" data-chat="'+newSocketID+'"> <span class="name">'+newUsername+'</span><br/><span class="preview">Messages privés</span> </li>'
+  friends.list.insertAdjacentHTML('beforeend', element)
+
+  // Messagerie
+  element = '<div class="chat" data-chat="' + newSocketID + '"></div>'
+  let lastChat = chat.container.querySelectorAll('.chat')
+  lastChat = lastChat[lastChat.length-1]
+  lastChat.insertAdjacentHTML('afterend', element)
+
+  updateFriends()
+
 }
 
-function removeUserChat(oldSocketID){
+// Suppresion d'une messagerie
+function removeUserChat(oldSocketID) {
 
-  if(chat.person === oldSocketID){
-    setAciveChat(friends.all[0]);
-  }
+  // Changement de chat si besoin
+  if (chat.person == oldSocketID)
+    setAciveChat(friends.all[0])
 
-  let element = friends.list.querySelector('.person[data-chat="'+oldSocketID+'"]');
-  element.parentNode.removeChild(element);
+  // Amis
+  let element = friends.list.querySelector('.person[data-chat="'+oldSocketID+'"]')
+  element.parentNode.removeChild(element)
 
-  element = chat.container.querySelector('.chat[data-chat="'+oldSocketID+'"]');
-  element.parentNode.removeChild(element);
+  // Messagerie
+  element = chat.container.querySelector('.chat[data-chat="' + oldSocketID + '"]')
+  element.parentNode.removeChild(element)
 
-  updateFriends();
+  updateFriends()
+
 }
+
